@@ -89,4 +89,5 @@ class MessService:
 
         registration.status = RegistrationStatus.CANCELLED
         registration.updated_at = now
+        self._repo.add_registration(registration)
         return registration
