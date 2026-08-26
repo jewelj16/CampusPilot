@@ -1,36 +1,67 @@
 """
-Basic API-level tests for the Phase 1 mess module.
-
-These hit the FastAPI app directly via httpx's ASGI transport — no real
-server, no real DB, just the app + its in-memory repository, seeded fresh
-for each test via the `client` fixture.
+API-level tests for the Phase 1 mess module, now backed by a real Postgres
+database spun up via testcontainers.
 """
 from datetime import date, datetime, timedelta, timezone
 
 import httpx
 import pytest
 import pytest_asyncio
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from testcontainers.postgres import PostgresContainer
 
 from app.main import app
 from app.models.mess import Dish, Meal, MealType
-from app.repositories.mess_repository import mess_repository
+from app.core.db import Base, get_db
+from app.repositories.postgres_mess_repository import PostgresMessRepository
+from app.repositories.orm_models import MealORM, RegistrationORM, StudentORM
 from app.seed import seed
 
 pytestmark = pytest.mark.asyncio
 
+@pytest.fixture(scope="session")
+def postgres_engine():
+    with PostgresContainer("postgres:16-alpine") as postgres:
+        engine = create_engine(postgres.get_connection_url())
+        Base.metadata.create_all(engine)
+        yield engine
+
+
+@pytest.fixture
+def db_session(postgres_engine):
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=postgres_engine)
+    session = SessionLocal()
+    
+    # Clean up before test
+    session.query(RegistrationORM).delete()
+    session.query(MealORM).delete()
+    session.query(StudentORM).delete()
+    session.commit()
+    
+    try:
+        yield session
+    finally:
+        session.rollback()
+        session.close()
+
 
 @pytest_asyncio.fixture
-async def client():
-    # Reset and reseed the in-memory store before every test so tests
-    # don't leak state into each other.
-    mess_repository._meals.clear()
-    mess_repository._registrations.clear()
-    mess_repository._students.clear()
-    seed(mess_repository)
+async def client(db_session):
+    seed(db_session)
+    db_session.commit()
 
+    def override_get_db():
+        try:
+            yield db_session
+        except Exception:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
+    app.dependency_overrides.clear()
 
 
 async def test_health(client):
@@ -44,7 +75,7 @@ async def test_get_menu_returns_days(client):
     assert resp.status_code == 200
     days = resp.json()
     assert len(days) == 7
-    assert all(len(day["meals"]) == 4 for day in days)  # breakfast/lunch/snacks/dinner
+    assert all(len(day["meals"]) == 4 for day in days)
 
 
 async def test_register_then_appears_in_my_registrations(client):
@@ -76,8 +107,7 @@ async def test_double_registration_is_rejected(client):
     assert second.status_code == 409
 
 
-async def test_registration_after_cutoff_is_rejected(client):
-    # Seed a meal whose cutoff is already in the past.
+async def test_registration_after_cutoff_is_rejected(client, db_session):
     past_meal = Meal(
         id="meal_test_past",
         mess_name="Hostel Mess A",
@@ -86,7 +116,9 @@ async def test_registration_after_cutoff_is_rejected(client):
         dishes=[Dish(id="d_test", name="Test Dish", is_veg=True)],
         cutoff_at=datetime.now(timezone.utc) - timedelta(hours=1),
     )
-    mess_repository.add_meal(past_meal)
+    repo = PostgresMessRepository(db_session)
+    repo.add_meal(past_meal)
+    db_session.commit()
 
     resp = await client.post("/api/v1/mess/registrations", json={"meal_id": "meal_test_past"})
     assert resp.status_code == 400
