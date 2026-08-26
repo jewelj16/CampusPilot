@@ -22,6 +22,7 @@ services:
     environment:
       APP_ENV: development
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      DATABASE_URL: postgresql+psycopg://campuspilot:campuspilot@db:5432/campuspilot
     volumes:
       - ./backend/app:/app/app
     depends_on:
