@@ -11,7 +11,9 @@ from datetime import date, datetime, time, timedelta, timezone
 
 from app.core.dummy_auth import DUMMY_STUDENT_ID
 from app.models.mess import Dish, Meal, MealType, Student
-from app.repositories.mess_repository import MessRepository
+from sqlalchemy.orm import Session
+from app.repositories.postgres_mess_repository import PostgresMessRepository
+from app.repositories.orm_models import StudentORM
 
 MESS_NAME = "Hostel Mess A"
 
@@ -36,7 +38,12 @@ def _dish(name: str, is_veg: bool, idx: int) -> Dish:
     return Dish(id=f"dish_{idx}", name=name, is_veg=is_veg)
 
 
-def seed(repo: MessRepository) -> None:
+def seed(session: Session) -> None:
+    repo = PostgresMessRepository(session)
+    # Check if DB is already seeded
+    if session.query(StudentORM).first() is not None:
+        return
+
     repo.add_student(
         Student(id=DUMMY_STUDENT_ID, name="Aditi Rao", roll_no="CS21B045", hostel="Hostel A")
     )

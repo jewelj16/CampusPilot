@@ -7,15 +7,21 @@ from fastapi.responses import JSONResponse
 from app.api.v1.mess import router as mess_router
 from app.core.config import get_settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
-from app.repositories.mess_repository import mess_repository
 from app.seed import seed
+from app.core.db import get_engine, Base
+from sqlalchemy.orm import Session
+from app.repositories.orm_models import StudentORM # ensure models are registered
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    seed(mess_repository)
+    engine = get_engine()
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        seed(session)
+        session.commit()
     yield
 
 
