@@ -1,17 +1,23 @@
 from datetime import date as Date
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, status, Depends
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
+from app.repositories.postgres_mess_repository import PostgresMessRepository
 
 from app.core.dummy_auth import CurrentStudentId
 from app.models.mess import Meal, Registration
-from app.repositories.mess_repository import mess_repository
 from app.schemas.mess import DayMenuOut, DishOut, MealOut, RegistrationCreate, RegistrationOut
 from app.services.mess_service import MessService
 
 router = APIRouter(prefix="/mess", tags=["mess"])
 
-_service = MessService(mess_repository)
+
+def get_mess_service(db: Session = Depends(get_db)) -> MessService:
+    repo = PostgresMessRepository(db)
+    return MessService(repo)
 
 
 def _to_registration_out(registration: Registration) -> RegistrationOut:
@@ -41,10 +47,11 @@ def _to_meal_out(meal: Meal, registration: Registration | None) -> MealOut:
 def get_menu(
     student_id: CurrentStudentId,
     days: int = Query(7, ge=1, le=14, description="Number of days ahead to include, starting today"),
+    service: MessService = Depends(get_mess_service)
 ) -> list[DayMenuOut]:
     today = Date.today()
     end = today + timedelta(days=days - 1)
-    meals, registrations = _service.get_day_menu(student_id, today, end)
+    meals, registrations = service.get_day_menu(student_id, today, end)
 
     by_day: dict[Date, list[MealOut]] = {}
     for meal in meals:
@@ -54,17 +61,17 @@ def get_menu(
 
 
 @router.get("/registrations/me", response_model=list[RegistrationOut])
-def list_my_registrations(student_id: CurrentStudentId) -> list[RegistrationOut]:
-    return [_to_registration_out(r) for r in _service.list_registrations(student_id)]
+def list_my_registrations(student_id: CurrentStudentId, service: MessService = Depends(get_mess_service)) -> list[RegistrationOut]:
+    return [_to_registration_out(r) for r in service.list_registrations(student_id)]
 
 
 @router.post("/registrations", response_model=RegistrationOut, status_code=status.HTTP_201_CREATED)
-def create_registration(payload: RegistrationCreate, student_id: CurrentStudentId) -> RegistrationOut:
-    registration = _service.register_for_meal(student_id, payload.meal_id)
+def create_registration(payload: RegistrationCreate, student_id: CurrentStudentId, service: MessService = Depends(get_mess_service)) -> RegistrationOut:
+    registration = service.register_for_meal(student_id, payload.meal_id)
     return _to_registration_out(registration)
 
 
 @router.delete("/registrations/{registration_id}", response_model=RegistrationOut)
-def cancel_registration(registration_id: str, student_id: CurrentStudentId) -> RegistrationOut:
-    registration = _service.cancel_registration(student_id, registration_id)
+def cancel_registration(registration_id: str, student_id: CurrentStudentId, service: MessService = Depends(get_mess_service)) -> RegistrationOut:
+    registration = service.cancel_registration(student_id, registration_id)
     return _to_registration_out(registration)

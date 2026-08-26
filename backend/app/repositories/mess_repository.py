@@ -1,6 +1,8 @@
 """
 In-memory repository for meals and registrations.
 
+NOTE: Retained for fast unit tests / as a reference implementation, but is no longer used by the running app. The running app now uses PostgresMessRepository.
+
 This is Phase 1's "dummy backend": no Postgres, no SQLAlchemy — just
 process-local dicts, seeded on startup. The public methods here are the
 same shape a real `SQLAlchemyMessRepository` will have at M2 (get, list,
