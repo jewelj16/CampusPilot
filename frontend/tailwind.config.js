@@ -33,6 +33,15 @@ export default {
       boxShadow: {
         ticket: "0 1px 0 rgba(30,36,56,0.06), 0 8px 20px -12px rgba(30,36,56,0.35)",
       },
+      animation: {
+        'pan-bg': 'panBackground 30s ease-in-out infinite',
+      },
+      keyframes: {
+        panBackground: {
+          '0%, 100%': { backgroundPosition: '0% 50%', backgroundSize: '110% auto' },
+          '50%': { backgroundPosition: '100% 50%', backgroundSize: '115% auto' },
+        },
+      },
     },
   },
   plugins: [],

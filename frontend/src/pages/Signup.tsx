@@ -31,8 +31,15 @@ export function Signup() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-ink-50 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl shadow-ink-200/20 ring-1 ring-ink-100">
+    <div 
+      className="animate-pan-bg flex min-h-screen items-center justify-center p-4"
+      style={{
+        backgroundImage: "linear-gradient(to right, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat"
+      }}
+    >
+      <div className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-ink-100">
         <div className="bg-ink-900 p-8 text-white">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-mustard text-ink-900">
