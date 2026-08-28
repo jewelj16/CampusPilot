@@ -15,6 +15,7 @@ class StudentORM(Base):
     name = Column(String, nullable=False)
     roll_no = Column(String, nullable=False)
     hostel = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)
 
 
 class MealORM(Base):

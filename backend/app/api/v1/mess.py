@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.repositories.postgres_mess_repository import PostgresMessRepository
 
-from app.core.dummy_auth import CurrentStudentId
+from app.core.auth import CurrentStudentId
 from app.models.mess import Meal, Registration
 from app.schemas.mess import DayMenuOut, DishOut, MealOut, RegistrationCreate, RegistrationOut
 from app.services.mess_service import MessService

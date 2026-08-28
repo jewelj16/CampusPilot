@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.v1.mess import router as mess_router
+from app.api.v1.auth import router as auth_router
 from app.core.config import get_settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.seed import seed
@@ -67,4 +68,5 @@ def health() -> dict:
     return {"status": "ok", "env": settings.app_env}
 
 
+app.include_router(auth_router, prefix=settings.api_v1_prefix)
 app.include_router(mess_router, prefix=settings.api_v1_prefix)

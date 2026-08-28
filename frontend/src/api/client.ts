@@ -3,8 +3,14 @@ import type { ApiError, DayMenu, Registration } from "../types/mess";
 const BASE = "/api/v1";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = localStorage.getItem("token");
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: { ...headers, ...(init?.headers || {}) },
     ...init,
   });
 
@@ -28,4 +34,18 @@ export const messApi = {
     request<Registration>(`/mess/registrations/${registrationId}`, {
       method: "DELETE",
     }),
+};
+
+export const authApi = {
+  login: (data: any) =>
+    request<{ access_token: string; token_type: string }>(`/auth/login`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  signup: (data: any) =>
+    request<{ access_token: string; token_type: string }>(`/auth/signup`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  me: () => request<any>(`/auth/me`),
 };

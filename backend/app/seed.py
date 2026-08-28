@@ -9,7 +9,7 @@ Cutoff rule (dummy, for demo purposes): registration/cancellation closes
 """
 from datetime import date, datetime, time, timedelta, timezone
 
-from app.core.dummy_auth import DUMMY_STUDENT_ID
+from app.core.auth import DUMMY_STUDENT_ID
 from app.models.mess import Dish, Meal, MealType, Student
 from sqlalchemy.orm import Session
 from app.repositories.postgres_mess_repository import PostgresMessRepository
@@ -38,14 +38,23 @@ def _dish(name: str, is_veg: bool, idx: int) -> Dish:
     return Dish(id=f"dish_{idx}", name=name, is_veg=is_veg)
 
 
+from app.services.auth_service import get_password_hash
+
 def seed(session: Session) -> None:
     repo = PostgresMessRepository(session)
     # Check if DB is already seeded
     if session.query(StudentORM).first() is not None:
         return
 
-    repo.add_student(
-        Student(id=DUMMY_STUDENT_ID, name="Aditi Rao", roll_no="CS21B045", hostel="Hostel A")
+    # Seed the dummy student with a default password directly using ORM
+    session.add(
+        StudentORM(
+            id=DUMMY_STUDENT_ID,
+            name="Aditi Rao",
+            roll_no="CS21B045",
+            hostel="Hostel A",
+            hashed_password=get_password_hash("password")
+        )
     )
 
     dish_counter = 0

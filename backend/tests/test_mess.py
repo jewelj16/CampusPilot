@@ -58,8 +58,14 @@ async def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
+    
+    # Generate token for the seeded dummy student
+    from app.services.auth_service import create_access_token
+    from app.core.auth import DUMMY_STUDENT_ID
+    token = create_access_token({"sub": DUMMY_STUDENT_ID})
+    
     transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+    async with httpx.AsyncClient(transport=transport, base_url="http://test", headers={"Authorization": f"Bearer {token}"}) as c:
         yield c
     app.dependency_overrides.clear()
 
