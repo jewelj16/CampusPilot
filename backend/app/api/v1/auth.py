@@ -35,12 +35,12 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
-    student = db.query(StudentORM).filter(StudentORM.id == payload.id).first()
+    student = db.query(StudentORM).filter(StudentORM.roll_no == payload.roll_no).first()
     if not student:
-        raise HTTPException(status_code=401, detail="Incorrect ID or password")
+        raise HTTPException(status_code=401, detail="Incorrect Roll Number or password")
     
     if not verify_password(payload.password, student.hashed_password):
-        raise HTTPException(status_code=401, detail="Incorrect ID or password")
+        raise HTTPException(status_code=401, detail="Incorrect Roll Number or password")
 
     access_token = create_access_token(data={"sub": student.id})
     return {"access_token": access_token, "token_type": "bearer"}

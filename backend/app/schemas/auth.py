@@ -5,7 +5,7 @@ class Token(BaseModel):
     token_type: str
 
 class LoginRequest(BaseModel):
-    id: str
+    roll_no: str
     password: str
 
 class SignupRequest(BaseModel):

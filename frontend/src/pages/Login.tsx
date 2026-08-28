@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { LogIn, Loader2 } from "lucide-react";
 
 export function Login() {
-  const [id, setId] = useState("");
+  const [rollNo, setRollNo] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export function Login() {
     setLoading(true);
     setError(null);
     try {
-      const data = await authApi.login({ id, password });
+      const data = await authApi.login({ roll_no: rollNo, password });
       login(data.access_token);
       navigate("/");
     } catch (err) {
@@ -53,14 +53,14 @@ export function Login() {
             
             <div className="flex flex-col gap-1.5">
               <label className="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-400">
-                Student ID
+                Roll Number
               </label>
               <input
                 type="text"
                 required
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-                placeholder="e.g. stu_00001"
+                value={rollNo}
+                onChange={(e) => setRollNo(e.target.value)}
+                placeholder="e.g. CS21B045"
                 className="rounded-lg border-0 bg-ink-50 px-4 py-3 text-ink-900 ring-1 ring-inset ring-ink-200 transition-shadow focus:bg-white focus:ring-2 focus:ring-inset focus:ring-mustard sm:text-sm"
               />
             </div>
